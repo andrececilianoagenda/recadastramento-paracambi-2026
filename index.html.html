@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IA de Recadastramento – Prefeitura de Paracambi 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #f5f3ef;
+  --surface: #ffffff;
+  --surface2: #f0ede8;
+  --border: #ddd9d2;
+  --accent: #1a3a5c;
+  --accent2: #c8622a;
+  --green: #2d6a4f;
+  --green-light: #d8f3dc;
+  --muted: #8a8580;
+  --text: #1c1a17;
+  --shadow: rgba(26,58,92,0.08);
+  --radius: 16px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --display: 'Fraunces', serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--font); color: var(--text); background: var(--bg); overflow: hidden; }
+
+/* LAYOUT */
+#app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+
+/* HEADER */
+header {
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--accent2);
+}
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-badge {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--accent2), #e8882a);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.logo h1 { font-family: var(--display); font-size: 16px; font-weight: 700; line-height: 1.2; }
+.logo p { font-size: 10px; opacity: 0.6; font-family: var(--mono); margin-top: 2px; }
+.header-pills { display: flex; align-items: center; gap: 10px; }
+.pill {
+  font-family: var(--mono); font-size: 11px;
+  padding: 5px 12px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.8);
+}
+.pill.live { border-color: #4ade80; color: #4ade80; }
+.pill.live::before { content: '●'; margin-right: 5px; animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* MAIN GRID */
+.main { display: grid; grid-template-columns: 400px 1fr; overflow: hidden; }
+
+/* CHAT PANEL */
+.chat-panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.chat-header h2 { font-family: var(--display); font-size: 18px; color: var(--accent); }
+.chat-header p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.chat-mode-tabs {
+  display: flex; gap: 6px; margin-top: 12px;
+}
+.tab-btn {
+  flex: 1; padding: 7px 10px; border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: transparent; cursor: pointer;
+  font-family: var(--font); font-size: 12px;
+  color: var(--muted); transition: all 0.2s;
+}
+.tab-btn.active {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+
+/* MESSAGES */
+.messages {
+  flex: 1; overflow-y: auto; padding: 18px 16px;
+  display: flex; flex-direction: column; gap: 14px;
+  scroll-behavior: smooth;
+}
+.messages::-webkit-scrollbar { width: 3px; }
+.messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.msg { display: flex; gap: 10px; animation: msgIn 0.3s ease; }
+@keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.msg-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+  margin-top: 2px;
+}
+.msg.ai .msg-avatar { background: var(--accent); }
+.msg.user .msg-avatar { background: var(--accent2); margin-left: auto; }
+.msg-bubble {
+  max-width: 280px; padding: 11px 14px;
+  border-radius: 4px 14px 14px 14px;
+  font-size: 13px; line-height: 1.65;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+}
+.msg.user { flex-direction: row-reverse; }
+.msg.user .msg-bubble {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+  border-radius: 14px 4px 14px 14px;
+}
+.msg.ai.highlight .msg-bubble {
+  background: #fff8f0; border-color: var(--accent2);
+  border-left: 3px solid var(--accent2);
+}
+.typing-indicator { display: flex; gap: 4px; align-items: center; padding: 2px 0; }
+.typing-indicator span {
+  width: 7px; height: 7px; background: var(--muted); border-radius: 50%;
+  animation: bounce 1.4s infinite;
+}
+.typing-indicator span:nth-child(2) { animation-delay: .2s; }
+.typing-indicator span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+/* QUICK ACTIONS */
+.quick-actions { padding: 10px 14px; border-top: 1px solid var(--border); display: flex; gap: 7px; flex-wrap: wrap; }
+.quick-btn {
+  font-size: 11px; padding: 5px 11px; border-radius: 20px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--accent); cursor: pointer; font-family: var(--font);
+  transition: all 0.2s; white-space: nowrap;
+}
+.quick-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* CHAT INPUT */
+.chat-input-area {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: flex-end;
+}
+.chat-input-area textarea {
+  flex: 1; border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 10px 13px; font-family: var(--font); font-size: 13px;
+  color: var(--text); background: var(--surface2); resize: none;
+  min-height: 44px; max-height: 120px; outline: none; line-height: 1.5;
+  transition: border-color 0.2s;
+}
+.chat-input-area textarea:focus { border-color: var(--accent); }
+.send-btn {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: var(--accent); border: none; cursor: pointer;
+  color: #fff; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; transition: all 0.2s;
+}
+.send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* FORM PANEL */
+.form-panel {
+  overflow-y: auto; padding: 28px 36px;
+  display: flex; flex-direction: column; gap: 0;
+}
+.form-panel::-webkit-scrollbar { width: 4px; }
+.form-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* PROGRESS */
+.progress-track {
+  display: flex; gap: 0; margin-bottom: 28px;
+  position: sticky; top: 0; background: var(--bg); z-index: 10;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.step-node {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; position: relative; cursor: pointer;
+}
+.step-node::after {
+  content: ''; position: absolute; top: 16px; left: 60%; width: 80%;
+  height: 2px; background: var(--border);
+}
+.step-node:last-child::after { display: none; }
+.step-node.done::after { background: var(--green); }
+.step-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; background: var(--surface); z-index: 1;
+  transition: all 0.3s; font-weight: 600;
+}
+.step-node.active .step-dot { border-color: var(--accent); background: var(--accent); color: #fff; }
+.step-node.done .step-dot { border-color: var(--green); background: var(--green); color: #fff; }
+.step-label { font-size: 10px; color: var(--muted); font-family: var(--mono); text-align: center; }
+.step-node.active .step-label { color: var(--accent); font-weight: 600; }
+
+/* FORM SECTIONS */
+.form-section { display: none; flex-direction: column; gap: 20px; animation: slideIn 0.35s ease; }
+.form-section.active { display: flex; }
+@keyframes slideIn { from{opacity:0;transform:translateX(18px)} to{opacity:1;transform:translateX(0)} }
+
+.section-hero { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.section-hero-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent), #2a5a8c);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.section-hero h2 { font-family: var(--display); font-size: 22px; color: var(--accent); }
+.section-hero p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 22px;
+}
+.card-title {
+  font-size: 11px; font-weight: 600; font-family: var(--mono);
+  color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title::before { content: ''; width: 3px; height: 14px; background: var(--accent2); border-radius: 2px; flex-shrink: 0; }
+
+/* FIELD GRID */
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fgrid.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.fgrid.g1 { grid-template-columns: 1fr; }
+.f { display: flex; flex-direction: column; gap: 5px; }
+.f.s2 { grid-column: span 2; }
+.f.s3 { grid-column: span 3; }
+label.flabel {
+  font-size: 10px; font-weight: 600; font-family: var(--mono);
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;
+}
+label.flabel .req { color: var(--accent2); margin-left: 2px; }
+input[type=text], input[type=date], input[type=tel], input[type=email],
+input[type=number], select, textarea {
+  border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 9px 12px; font-family: var(--font); font-size: 13px;
+  color: var(--text); background: var(--surface2); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s; width: 100%;
+  -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,58,92,0.08);
+}
+input.ok { border-color: var(--green); }
+input.err, select.err { border-color: #dc2626; }
+.ferr { font-size: 10px; color: #dc2626; display: none; margin-top: 2px; }
+.ferr.show { display: block; }
+textarea { resize: vertical; min-height: 70px; }
+select { cursor: pointer; }
+select option { background: var(--surface2); }
+
+/* RADIO / CHECK */
+.rgroup { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.ropt {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; font-size: 12.5px;
+}
+.ropt input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; margin: 0; }
+.rcol { flex-direction: column; }
+
+/* ALERT */
+.alert {
+  border-radius: 12px; padding: 12px 16px;
+  font-size: 12px; line-height: 1.7;
+}
+.alert-warn { background: #fff8e7; border: 1px solid #f5c842; color: #8a6a00; }
+.alert-info { background: #e8f4fd; border: 1px solid #93c5fd; color: #1a4a7c; }
+.alert-ok { background: var(--green-light); border: 1px solid #74c69d; color: var(--green); }
+
+/* DEPENDENTES */
+.dep-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px; margin-bottom: 12px;
+}
+.dep-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.dep-label { font-size: 12px; font-weight: 700; color: var(--accent); font-family: var(--mono); }
+.btn-rem { background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; border-radius: 8px; padding: 4px 12px; font-size: 11px; cursor: pointer; font-family: var(--font); }
+.btn-add-dep {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  padding: 14px; color: var(--muted); cursor: pointer;
+  font-family: var(--font); font-size: 13px;
+  background: transparent; width: 100%; transition: all 0.2s;
+}
+.btn-add-dep:hover { border-color: var(--accent); color: var(--accent); }
+
+/* DOCS CHECKLIST */
+.doc-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface2);
+  cursor: pointer; transition: all 0.2s; margin-bottom: 7px;
+}
+.doc-item.checked { border-color: var(--green); background: var(--green-light); }
+.doc-check {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 2px solid var(--border); display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; font-size: 13px;
+  transition: all 0.2s;
+}
+.doc-item.checked .doc-check { background: var(--green); border-color: var(--green); color: #fff; }
+.doc-info { flex: 1; }
+.doc-name { font-size: 12.5px; font-weight: 600; }
+.doc-desc { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.doc-link { font-size: 10px; color: var(--accent); font-family: var(--mono); margin-top: 4px; display: inline-block; }
+.doc-status { font-size: 10px; font-family: var(--mono); color: var(--muted); flex-shrink: 0; }
+.doc-item.checked .doc-status { color: var(--green); }
+
+/* DOCS PROGRESS */
+.docs-prog { background: var(--surface2); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.docs-prog-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; }
+.docs-prog-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.docs-prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--green)); border-radius: 3px; transition: width 0.5s; }
+
+/* REVIEW */
+.review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.review-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; }
+.review-item.full { grid-column: span 2; }
+.review-item label { font-size: 9px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.review-item p { font-size: 12.5px; font-weight: 600; margin-top: 3px; }
+.section-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(26,58,92,0.08); border: 1px solid rgba(26,58,92,0.15);
+  border-radius: 20px; padding: 3px 11px; font-size: 10px;
+  color: var(--accent); font-family: var(--mono); margin-bottom: 10px; margin-top: 6px;
+}
+
+/* BUTTONS */
+.actions { display: flex; gap: 10px; justify-content: flex-end; padding-top: 18px; border-top: 1px solid var(--border); }
+.btn { padding: 11px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font); border: none; display: flex; align-items: center; gap: 7px; transition: all 0.2s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #14304d; transform: translateY(-1px); }
+.btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--text); color: var(--text); }
+.btn-success { background: var(--green); color: #fff; }
+.btn-danger { background: var(--accent2); color: #fff; }
+
+/* SUCCESS */
+.success-screen { text-align: center; padding: 40px 30px; }
+.success-icon {
+  width: 96px; height: 96px; background: var(--green);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 44px; margin: 0 auto 24px;
+  animation: pop 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 0 40px rgba(45,106,79,0.3);
+}
+@keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+.success-screen h2 { font-family: var(--display); font-size: 26px; color: var(--accent); }
+.protocol-box {
+  font-family: var(--mono); font-size: 22px; color: var(--accent);
+  letter-spacing: 4px; font-weight: 600;
+  background: var(--surface); border: 2px solid var(--accent);
+  border-radius: 14px; padding: 18px 32px; display: inline-block;
+  margin: 18px 0;
+}
+.protocol-label { font-size: 10px; color: var(--muted); font-family: var(--mono); }
+
+/* WELCOME */
+.welcome-card {
+  background: linear-gradient(135deg, var(--accent), #2a5a8c);
+  color: #fff; border-radius: var(--radius); padding: 30px;
+  text-align: center; margin-bottom: 20px;
+}
+.welcome-card h2 { font-family: var(--display); font-size: 24px; line-height: 1.3; }
+.welcome-card p { font-size: 13px; opacity: 0.8; margin-top: 8px; line-height: 1.6; }
+.steps-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 18px; }
+.steps-grid-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 8px; text-align: center;
+}
+.steps-grid-item .sicon { font-size: 22px; margin-bottom: 6px; }
+.steps-grid-item .stitle { font-size: 11px; font-weight: 600; color: var(--accent); }
+.steps-grid-item .ssub { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+/* AI THINKING OVERLAY */
+.thinking-overlay {
+  position: fixed; inset: 0; background: rgba(245,243,239,0.9);
+  backdrop-filter: blur(4px);
+  z-index: 100; display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 16px;
+}
+.thinking-overlay.show { display: flex; }
+.thinking-spinner {
+  width: 56px; height: 56px; border-radius: 16px;
+  background: var(--accent); display: flex; align-items: center;
+  justify-content: center; font-size: 26px;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
+.thinking-text { font-family: var(--display); font-size: 18px; color: var(--accent); }
+.thinking-sub { font-size: 12px; color: var(--muted); }
+
+/* NOTA */
+.nota { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 4px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">🏛️</div>
+    <div>
+      <h1>Prefeitura Municipal de Paracambi</h1>
+      <p>RECADASTRAMENTO ANUAL DE SERVIDORES · DECRETO Nº 6.010/2025 · 2026</p>
+    </div>
+  </div>
+  <div class="header-pills">
+    <div class="pill live">IA ATIVA</div>
+    <div class="pill" id="clock-pill">00:00:00</div>
+    <div class="pill" id="step-pill">Etapa – / 5</div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- CHAT PANEL -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <h2>Assistente Virtual</h2>
+      <p>Powered by Claude · Resolução SEADM · Decreto nº 6.010/2025</p>
+      <div class="chat-mode-tabs">
+        <button class="tab-btn active" onclick="setMode('guia')" id="tab-guia">🧭 Guia</button>
+        <button class="tab-btn" onclick="setMode('duvida')" id="tab-duvida">❓ Tire Dúvidas</button>
+        <button class="tab-btn" onclick="setMode('doc')" id="tab-doc">📄 Sobre Docs</button>
+      </div>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="quick-actions" id="quick-actions"></div>
+    <div class="chat-input-area">
+      <textarea id="user-input" placeholder="Pergunte algo sobre o recadastramento..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">↑</button>
+    </div>
+  </div>
+
+  <!-- FORM PANEL -->
+  <div class="form-panel" id="form-panel">
+
+    <!-- PROGRESS -->
+    <div class="progress-track" id="progress-track" style="display:none">
+      <div class="step-node" id="sn1" onclick="goTo(1)">
+        <div class="step-dot" id="sd1">👤</div>
+        <div class="step-label">Pessoais</div>
+      </div>
+      <div class="step-node" id="sn2" onclick="goTo(2)">
+        <div class="step-dot" id="sd2">🏢</div>
+        <div class="step-label">Funcionais</div>
+      </div>
+      <div class="step-node" id="sn3" onclick="goTo(3)">
+        <div class="step-dot" id="sd3">👨‍👩‍👧</div>
+        <div class="step-label">Dependentes</div>
+      </div>
+      <div class="step-node" id="sn4" onclick="goTo(4)">
+        <div class="step-dot" id="sd4">📄</div>
+        <div class="step-label">Documentos</div>
+      </div>
+      <div class="step-node" id="sn5" onclick="goTo(5)">
+        <div class="step-dot" id="sd5">✅</div>
+        <div class="step-label">Revisão</div>
+      </div>
+    </div>
+
+    <!-- SECTION 0: WELCOME -->
+    <div class="form-section active" id="sec-0">
+      <div class="welcome-card">
+        <div style="font-size:48px;margin-bottom:14px;">🏛️</div>
+        <h2>Recadastramento Anual de<br/>Servidores Municipais 2026</h2>
+        <p>Obrigatório conforme Decreto nº 6.010/2025 · Resolução SEADM<br/>
+        A IA irá guiar você em todas as 5 etapas — aproximadamente 10 minutos.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="steps-grid-item"><div class="sicon">👤</div><div class="stitle">Dados Pessoais</div><div class="ssub">Identificação e contato</div></div>
+        <div class="steps-grid-item"><div class="sicon">🏢</div><div class="stitle">Dados Funcionais</div><div class="ssub">Cargo e lotação</div></div>
+        <div class="steps-grid-item"><div class="sicon">👨‍👩‍👧</div><div class="stitle">Dependentes</div><div class="ssub">Família e benefícios</div></div>
+        <div class="steps-grid-item"><div class="sicon">📄</div><div class="stitle">Documentos</div><div class="ssub">Checklist legal</div></div>
+        <div class="steps-grid-item"><div class="sicon">✅</div><div class="stitle">Revisão</div><div class="ssub">Confirmar e enviar</div></div>
+      </div>
+      <div class="alert alert-warn">
+        ⚠️ <strong>Atenção:</strong> Servidores que não realizarem o recadastramento no mês do aniversário terão a remuneração suspensa, conforme art. 7º do Decreto nº 6.010/2025.
+      </div>
+      <div class="actions" style="border-top:none">
+        <button class="btn btn-primary" onclick="goTo(1)" style="width:100%;justify-content:center;font-size:15px;padding:14px">▶ &nbsp;Iniciar Recadastramento</button>
+      </div>
+    </div>
+
+    <!-- SECTION 1: DADOS PESSOAIS -->
+    <div class="form-section" id="sec-1">
+      <div class="section-hero">
+        <div class="section-hero-icon">👤</div>
+        <div><h2>Dados Pessoais</h2><p>Anexo III – Formulário Oficial · Resolução SEADM</p></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Identificação</div>
+        <div class="fgrid">
+          <div class="f s2"><label class="flabel">Nome Completo <span class="req">*</span></label><input type="text" id="nome" placeholder="Nome completo conforme documento de identidade"/><span class="ferr" id="err-nome">Obrigatório</span></div>
+          <div class="f s2"><label class="flabel">Nome Social (se houver)</label><input type="text" id="nome-social" placeholder="Nome pelo qual prefere ser tratado(a)"/></div>
+          <div class="f"><label class="flabel">Data de Nascimento <span class="req">*</span></label><input type="date" id="nascimento" onchange="calcIdade()"/><span class="ferr" id="err-nasc">Obrigatório</span></div>
+          <div class="f"><label class="flabel">Idade</label><input type="text" id="idade" placeholder="Calculada automaticamente" readonly/></div>
+          <div class="f"><label class="flabel">Nacionalidade</label><input type="text" id="nacionalidade" placeholder="Ex: Brasileira"/></div>
+          <div class="f"><label class="flabel">Naturalidade (Município/UF)</label><input type="text" id="naturalidade" placeholder="Ex: Paracambi/RJ"/></div>
+          <div class="f"><label class="flabel">Nome da Mãe</label><input type="text" id="mae" placeholder="Nome completo da mãe"/></div>
+          <div class="f"><label class="flabel">Nome do Pai</label><input type="text" id="pai" placeholder="Nome completo do pai"/></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Sexo / Gênero / Raça / PCD</div>
+        <div class="fgrid">
+          <div class="f">
+            <label class="flabel">Sexo <span class="req">*</span></label>
+            <div class="rgroup">
+              <label class="ropt"><input type="radio" name="sexo" value="Masculino"/> Masculino</label>
+              <label class="ropt"><input type="radio" name="sexo" value="Feminino"/> Feminino</label>
+              <label class="ropt"><input type="radio" name="sexo" value="Prefiro não informar"/> Prefiro não informar</label>
+            </div>
+          </div>
+          <div class="f"><label class="flabel">Estado Civil <span class="req">*</span></label>
+            <select id="estado-civil">
+              <option value="">Selecione...</option>
+              <option>Solteiro(a)</option><option>Casado(a)</option><option>União Estável</option>
+              <option>Divorciado(a)</option><option>Separado(a) judicialmente</option><option>Viúvo(a)</option><option>Outro</option>
+            </select>
+          </div>
+          <div class="f s2">
+            <label class="flabel">Autoidentificação de Gênero (opcional)</label>
+            <div class="rgroup">
+              <label class="ropt"><input type="radio" name="genero" value="Cisgênero"/> Cisgênero</label>
+              <label class="ropt"><input type="radio" name="genero" value="Transgênero"/> Transgênero</label>
+              <label class="ropt"><input type="radio" name="genero" value="Não binário"/> Não binário</label>
+              <label class="ropt"><input type="radio" name="genero" value="Prefiro não informar"/> Prefiro não informar</label>
+            </div>
+          </div>
+          <div class="f s2">
+            <label class="flabel">Cor ou Raça (autodeclaração)</label>
+            <div class="rgroup">
+              <label class="ropt"><input type="radio" name="raca" value="Branca"/> Branca</label>
+              <label class="ropt"><input type="radio" name="raca" value="Preta"/> Preta</label>
+              <label class="ropt"><input type="radio" name="raca" value="Parda"/> Parda</label>
+              <label class="ropt"><input type="radio" name="raca" value="Amarela"/> Amarela</label>
+              <label class="ropt"><input type="radio" name="raca" value="Indígena"/> Indígena</label>
+              <label class="ropt"><input type="radio" name="raca" value="Prefiro não informar"/> Prefiro não informar</label>
+            </div>
+          </div>
+          <div class="f s2">
+            <label class="flabel">Pessoa com Deficiência (PCD)</label>
+            <div class="rgroup">
+              <label class="ropt"><input type="radio" name="pcd" value="Não"/> Não</label>
+              <label class="ropt"><input type="radio" name="pcd" value="Deficiência física"/> Física</label>
+              <label class="ropt"><input type="radio" name="pcd" value="Deficiência visual"/> Visual</label>
+              <label class="ropt"><input type="radio" name="pcd" value="Deficiência auditiva"/> Auditiva</label>
+              <label class="ropt"><input type="radio" name="pcd" value="Deficiência intelectual"/> Intelectual</label>
+              <label class="ropt"><input type="radio" name="pcd" value="TEA"/> TEA</label>
+              <label class="ropt"><input type="radio" name="pcd" value="Prefiro não informar"/> Prefiro não informar</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Documentação Pessoal</div>
+        <div class="fgrid g3">
+          <div class="f"><label class="flabel">CPF <span class="req">*</span></label><input type="text" id="cpf" placeholder="000.000.000-00" oninput="mCPF(this)" maxlength="14"/><span class="ferr" id="err-cpf">CPF inválido</span></div>
+          <div class="f"><label class="flabel">RG <span class="req">*</span></label><input type="text" id="rg" placeholder="00.000.000-0"/><span class="ferr" id="err-rg">Obrigatório</span></div>
+          <div class="f"><label class="flabel">Órgão Emissor / UF</label><input type="text" id="rg-orgao" placeholder="Ex: DETRAN/RJ"/></div>
+          <div class="f"><label class="flabel">Título de Eleitor</label><input type="text" id="titulo" placeholder="Número do título"/></div>
+          <div class="f"><label class="flabel">Zona Eleitoral</label><input type="text" id="zona" placeholder="Ex: 001"/></div>
+          <div class="f"><label class="flabel">Seção Eleitoral</label><input type="text" id="secao" placeholder="Ex: 0001"/></div>
+          <div class="f"><label class="flabel">PIS/PASEP <span class="req">*</span></label><input type="text" id="pis" placeholder="000.00000.00-0"/><span class="ferr" id="err-pis">Obrigatório</span></div>
+          <div class="f"><label class="flabel">CNH (se houver)</label><input type="text" id="cnh" placeholder="Número da CNH"/></div>
+          <div class="f"><label class="flabel">Categoria CNH</label>
+            <select id="cnh-cat"><option value="">Selecione...</option><option>A</option><option>B</option><option>AB</option><option>C</option><option>D</option><option>E</option><option>N/A</option></select>
+          </div>
+          <div class="f s3"><label class="flabel">Certificado de Reservista (se aplicável)</label><input type="text" id="reservista" placeholder="Número do certificado (homens até 45 anos)"/></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Endereço e Contato</div>
+        <div class="fgrid">
+          <div class="f s2"><label class="flabel">Rua / Avenida <span class="req">*</span></label><input type="text" id="endereco" placeholder="Nome da rua ou avenida"/><span class="ferr" id="err-end">Obrigatório</span></div>
+          <div class="f"><label class="flabel">Número</label><input type="text" id="numero" placeholder="Nº"/></div>
+          <div class="f"><label class="flabel">Complemento</label><input type="text" id="complemento" placeholder="Apto, Bloco..."/></div>
+          <div class="f"><label class="flabel">Bairro</label><input type="text" id="bairro" placeholder="Bairro"/></div>
+          <div class="f"><label class="flabel">Cidade</label><input type="text" id="cidade" placeholder="Município"/></div>
+          <div class="f"><label class="flabel">CEP</label><input type="text" id="cep" placeholder="26600-000" oninput="mCEP(this)" maxlength="9"/></div>
+          <div class="f"><label class="flabel">Telefone Celular <span class="req">*</span></label><input type="tel" id="telefone" placeholder="(21) 99999-9999" oninput="mPhone(this)" maxlength="15"/><span class="ferr" id="err-tel">Obrigatório</span></div>
+          <div class="f"><label class="flabel">Telefone Alternativo</label><input type="tel" id="tel2" placeholder="(21) 99999-9999" oninput="mPhone(this)" maxlength="15"/></div>
+          <div class="f s2"><label class="flabel">E-mail</label><input type="email" id="email" placeholder="seu@email.com"/></div>
+          <div class="f s2"><label class="flabel">WhatsApp</label><input type="tel" id="whatsapp" placeholder="(21) 99999-9999" oninput="mPhone(this)" maxlength="15"/><label class="ropt" style="margin-top:6px;font-size:11px"><input type="checkbox" id="whatsapp-auth"/> Autorizo contato por WhatsApp para comunicações institucionais</label></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="goTo(0)">← Voltar</button>
+        <button class="btn btn-primary" onclick="next(1)">Próximo →</button>
+      </div>
+    </div>
+
+    <!-- SECTION 2: DADOS FUNCIONAIS -->
+    <div class="form-section" id="sec-2">
+      <div class="section-hero">
+        <div class="section-hero-icon">🏢</div>
+        <div><h2>Dados Funcionais</h2><p>Vínculo com a Administração Municipal de Paracambi</p></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Vínculo Funcional</div>
+        <div class="fgrid">
+          <div class="f"><label class="flabel">Matrícula Funcional <span class="req">*</span></label><input type="text" id="matricula" placeholder="Ex: 12345"/><span class="ferr" id="err-mat">Obrigatório</span></div>
+          <div class="f"><label class="flabel">Regime Jurídico <span class="req">*</span></label>
+            <select id="regime" onchange="toggleCargoEfetivo(this.value)">
+              <option value="">Selecione...</option>
+              <option value="Estatutário">Estatutário (Efetivo)</option>
+              <option value="CLT">CLT</option>
+              <option value="Comissionado">Exclusivamente Comissionado</option>
+              <option value="Temporário">Temporário</option>
+              <option value="Estagiário">Estagiário</option>
+            </select>
+          </div>
+          <div class="f s2" id="bloco-cargo-efetivo">
+            <label class="flabel">Cargo Efetivo <span class="req">*</span></label>
+            <input type="text" id="cargo" placeholder="Ex: Professor, Agente Administrativo..."/>
+            <span class="ferr" id="err-cargo">Obrigatório</span>
+          </div>
+          <div class="f s2" id="bloco-cargo-comissao">
+            <label class="flabel">Cargo em Comissão <span id="req-comissao"></span></label>
+            <input type="text" id="cargo-comissao" placeholder="Ex: Secretário Municipal, Diretor de Departamento..."/>
+            <span class="ferr" id="err-cargo-comissao">Obrigatório para regime exclusivamente comissionado</span>
+            <span class="nota" id="nota-comissao" style="display:none">⚠️ Servidores exclusivamente comissionados não possuem cargo efetivo — apenas o cargo em comissão é obrigatório.</span>
+          </div>
+          <div class="f">
+            <label class="flabel">Concurso de Ingresso</label>
+            <div class="rgroup">
+              <label class="ropt"><input type="radio" name="concurso" value="1990"/> 1990</label>
+              <label class="ropt"><input type="radio" name="concurso" value="2000"/> 2000</label>
+              <label class="ropt"><input type="radio" name="concurso" value="2003"/> 2003</label>
+              <label class="ropt"><input type="radio" name="concurso" value="2011"/> 2011</label>
+              <label class="ropt"><input type="radio" name="concurso" value="2015"/> 2015</label>
+              <label class="ropt"><input type="radio" name="concurso" value="2024"/> 2024</label>
+            </div>
+          </div>
+          <div class="f"><label class="flabel">Data de Ingresso <span class="req">*</span></label><input type="date" id="admissao"/><span class="ferr" id="err-adm">Obrigatório</span></div>
+          <div class="f s2"><label class="flabel">Secretaria / Órgão <span class="req">*</span></label>
+            <select id="secretaria">
+              <option value="">Selecione a secretaria...</option>
+              <option>Gabinete do Prefeito</option><option>Sec. de Administração e Gestão de Pessoas</option>
+              <option>Sec. de Educação</option><option>Sec. de Saúde</option>
+              <option>Sec. de Obras e Serviços Públicos</option><option>Sec. de Assistência Social</option>
+              <option>Sec. de Finanças</option><option>Sec. de Meio Ambiente e Desenvolvimento Sustentável</option>
+              <option>Sec. de Desenvolvimento Econômico, Indústria e Comércio</option>
+              <option>Sec. de Planejamento e Urbanismo</option><option>Sec. de Cultura</option>
+              <option>Sec. de Esporte e Lazer</option><option>Sec. de Juventude e Comunicação</option>
+              <option>Sec. de Proteção e Políticas para Mulheres</option><option>Sec. de Direitos Humanos</option>
+              <option>Sec. de Diversidade Religiosa, Inclusão e Combate ao Preconceito</option>
+              <option>Sec. de Trabalho, Emprego e Renda</option><option>Sec. de Agricultura</option>
+              <option>Sec. de Turismo</option><option>Sec. de Ciência, Tecnologia e Inovação</option>
+              <option>Sec. de Envelhecimento Saudável</option><option>Sec. de Defesa Civil</option>
+              <option>Sec. de Assuntos Especiais e Captação de Recursos</option>
+              <option>Sec. de Segurança Municipal e Ordem Pública</option>
+              <option>Sec. Executiva de Trânsito e Transporte Municipal</option>
+              <option>Procuradoria Geral do Município</option><option>Controladoria Geral</option>
+              <option>Ouvidoria</option><option>Câmara Municipal</option>
+              <option>FUNAP</option><option>FUNDEB</option><option>Fundo Municipal de Saúde</option><option>Outra</option>
+            </select>
+            <span class="ferr" id="err-sec">Obrigatório</span>
+          </div>
+          <div class="f s2"><label class="flabel">Local de Trabalho (Nome e Endereço)</label><input type="text" id="local-trabalho" placeholder="Ex: EMEF Prof. Fulano de Tal – Rua X, nº 100"/></div>
+          <div class="f"><label class="flabel">Jornada Semanal</label>
+            <select id="jornada"><option value="">Selecione...</option><option>20 horas</option><option>25 horas</option><option>30 horas</option><option>40 horas</option><option>44 horas</option><option>Outra</option></select>
+          </div>
+          <div class="f"><label class="flabel">Situação Atual</label>
+            <select id="situacao"><option value="">Selecione...</option><option>Em exercício</option><option>Em licença – Médica</option><option>Em licença – Maternidade/Paternidade</option><option>Em licença – Prêmio</option><option>Cedido (outro órgão)</option><option>Readaptado</option><option>Aposentado em atividade</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Formação Acadêmica</div>
+        <div class="fgrid">
+          <div class="f s2">
+            <label class="flabel">Grau de Instrução</label>
+            <div class="rgroup">
+              <label class="ropt"><input type="radio" name="instrucao" value="Fund. Incompleto"/> Fund. Incompleto</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Fund. Completo"/> Fund. Completo</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Médio Incompleto"/> Médio Incompleto</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Médio Completo"/> Médio Completo</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Técnico"/> Técnico</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Superior Incompleto"/> Superior Incompleto</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Superior Completo"/> Superior Completo</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Pós-Graduação"/> Pós-Graduação</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Mestrado"/> Mestrado</label>
+              <label class="ropt"><input type="radio" name="instrucao" value="Doutorado"/> Doutorado</label>
+            </div>
+          </div>
+          <div class="f"><label class="flabel">Curso Técnico (se houver)</label><input type="text" id="curso-tecnico" placeholder="Nome do curso"/></div>
+          <div class="f"><label class="flabel">Ano de Conclusão (Técnico)</label><input type="text" id="ano-tecnico" placeholder="Ex: 2018"/></div>
+          <div class="f"><label class="flabel">Curso Superior (se houver)</label><input type="text" id="curso-superior" placeholder="Nome do curso e instituição"/></div>
+          <div class="f"><label class="flabel">Ano de Conclusão (Superior)</label><input type="text" id="ano-superior" placeholder="Ex: 2015"/></div>
+          <div class="f"><label class="flabel">Pós-Graduação 1 (se houver)</label><input type="text" id="pos-grad" placeholder="Nome do curso e instituição"/></div>
+          <div class="f"><label class="flabel">Ano de Conclusão (Pós 1)</label><input type="text" id="ano-pos" placeholder="Ex: 2020"/></div>
+          <div class="f"><label class="flabel">Pós-Graduação 2 (se houver)</label><input type="text" id="pos-grad2" placeholder="Nome do curso e instituição"/></div>
+          <div class="f"><label class="flabel">Ano de Conclusão (Pós 2)</label><input type="text" id="ano-pos2" placeholder="Ex: 2021"/></div>
+          <div class="f"><label class="flabel">Pós-Graduação 3 (se houver)</label><input type="text" id="pos-grad3" placeholder="Nome do curso e instituição"/></div>
+          <div class="f"><label class="flabel">Ano de Conclusão (Pós 3)</label><input type="text" id="ano-pos3" placeholder="Ex: 2023"/></div>
+          <div class="f"><label class="flabel">Mestrado / Doutorado (se houver)</label><input type="text" id="mestrado" placeholder="Título e instituição"/></div>
+          <div class="f"><label class="flabel">Ano de Conclusão (Mestrado/Dout.)</label><input type="text" id="ano-mestrado" placeholder="Ex: 2022"/></div>
+          <div class="f s2"><label class="flabel">Cursos de Capacitação (últimos 3 anos)</label><textarea id="capacitacoes" placeholder="Liste os cursos, ano e carga horária..."></textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Questionário Socioassistencial</div>
+        <div class="fgrid">
+          <div class="f">
+            <label class="flabel">Você reside em:</label>
+            <div class="rgroup rcol">
+              <label class="ropt"><input type="radio" name="moradia" value="Casa própria"/> Casa própria</label>
+              <label class="ropt"><input type="radio" name="moradia" value="Casa alugada"/> Casa alugada</label>
+              <label class="ropt"><input type="radio" name="moradia" value="Cedida por familiar"/> Cedida por familiar</label>
+              <label class="ropt"><input type="radio" name="moradia" value="Imóvel funcional"/> Imóvel funcional ou da prefeitura</label>
+            </div>
+          </div>
+          <div class="f"><label class="flabel">Quantas pessoas moram com você?</label><input type="number" id="moradores" placeholder="Ex: 3" min="0"/></div>
+          <div class="f"><label class="flabel">Dependente com deficiência?</label><select id="dep-def"><option value="">Selecione...</option><option>Não</option><option>Sim</option></select></div>
+          <div class="f"><label class="flabel">Qual deficiência? (se sim)</label><input type="text" id="dep-def-qual" placeholder="Descreva a deficiência"/></div>
+          <div class="f"><label class="flabel">Beneficiário de programa social?</label><select id="prog-social"><option value="">Selecione...</option><option>Não</option><option>Sim</option></select></div>
+          <div class="f"><label class="flabel">Qual programa? (se sim)</label><input type="text" id="prog-social-qual" placeholder="Ex: Bolsa Família, BPC..."/></div>
+          <div class="f"><label class="flabel">Filhos em idade escolar?</label><select id="filhos-escola"><option value="">Selecione...</option><option>Não</option><option>Sim</option></select></div>
+          <div class="f"><label class="flabel">Quantos? (se sim)</label><input type="number" id="filhos-escola-qt" placeholder="Quantidade" min="0"/></div>
+          <div class="f"><label class="flabel">Participa de atividades comunitárias?</label><select id="ativ-com"><option value="">Selecione...</option><option>Não</option><option>Sim</option></select></div>
+          <div class="f"><label class="flabel">Quais? (se sim)</label><input type="text" id="ativ-com-qual" placeholder="Ex: associação de bairro, ONG..."/></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Dados Bancários</div>
+        <div class="fgrid g3">
+          <div class="f"><label class="flabel">Banco</label>
+            <select id="banco"><option value="">Selecione...</option><option>Banco do Brasil</option><option>Caixa Econômica Federal</option><option>Bradesco</option><option>Itaú</option><option>Santander</option><option>Nubank</option><option>Inter</option><option>Sicoob</option><option>Outro</option></select>
+          </div>
+          <div class="f"><label class="flabel">Agência</label><input type="text" id="agencia" placeholder="Ex: 0001"/></div>
+          <div class="f"><label class="flabel">Conta Corrente</label><input type="text" id="conta" placeholder="Ex: 12345-6"/></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="goTo(1)">← Voltar</button>
+        <button class="btn btn-primary" onclick="next(2)">Próximo →</button>
+      </div>
+    </div>
+
+    <!-- SECTION 3: DEPENDENTES -->
+    <div class="form-section" id="sec-3">
+      <div class="section-hero">
+        <div class="section-hero-icon">👨‍👩‍👧</div>
+        <div><h2>Dependentes</h2><p>Filhos, cônjuge e outros dependentes para benefícios</p></div>
+      </div>
+      <div class="alert alert-info">
+        ℹ️ Para dependentes <strong>menores de 14 anos e/ou portadores de deficiência</strong>, o Decreto nº 6.010/2025 exige certidão de nascimento e documentos de identificação (CPF, RG e comprovante de endereço).
+      </div>
+      <div id="dep-list"></div>
+      <button class="btn-add-dep" onclick="addDep()">＋ &nbsp;Adicionar Dependente</button>
+      <p class="nota" style="margin-top:10px">São considerados dependentes: cônjuge/companheiro(a), filhos até 21 anos (ou 24 se universitário), pais, irmãos inválidos ou incapazes.</p>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="goTo(2)">← Voltar</button>
+        <button class="btn btn-primary" onclick="goTo(4)">Próximo →</button>
+      </div>
+    </div>
+
+    <!-- SECTION 4: DOCUMENTOS -->
+    <div class="form-section" id="sec-4">
+      <div class="section-hero">
+        <div class="section-hero-icon">📄</div>
+        <div><h2>Documentos Obrigatórios</h2><p>Art. 5º · Decreto nº 6.010/2025 · Anexo V da Resolução SEADM</p></div>
+      </div>
+      <div class="alert alert-warn" style="margin-bottom:4px">
+        ⚠️ Marque cada item como <strong>"Entregue / Nada Consta"</strong>. Certidões devem ser emitidas há <strong>menos de 30 dias</strong>.
+      </div>
+      <div class="docs-prog">
+        <div class="docs-prog-top">
+          <span>Progresso da documentação</span>
+          <span id="docs-count" style="font-family:var(--mono);font-weight:600">0 / 22 confirmados</span>
+        </div>
+        <div class="docs-prog-bar"><div class="docs-prog-fill" id="docs-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Documentos Pessoais</div>
+        <div id="docs-pessoais"></div>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Certidões Negativas Obrigatórias</div>
+        <div id="docs-certidoes"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Documentos dos Dependentes</div>
+        <div id="docs-dependentes"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="goTo(3)">← Voltar</button>
+        <button class="btn btn-primary" onclick="goTo(5)">Revisar →</button>
+      </div>
+    </div>
+
+    <!-- SECTION 5: REVISÃO -->
+    <div class="form-section" id="sec-5">
+      <div class="section-hero">
+        <div class="section-hero-icon">✅</div>
+        <div><h2>Revisão e Envio</h2><p>Confirme todos os dados antes de concluir</p></div>
+      </div>
+      <div class="alert alert-warn" style="margin-bottom:4px">
+        ⚠️ Ao confirmar, os dados serão registrados no sistema da Prefeitura. Certifique-se de que todas as informações estão corretas.
+      </div>
+      <div id="review-content"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="goTo(4)">← Voltar</button>
+        <button class="btn btn-success" onclick="submit()">✓ Confirmar e Enviar</button>
+      </div>
+    </div>
+
+    <!-- SECTION 6: SUCESSO -->
+    <div class="form-section" id="sec-6">
+      <div class="success-screen">
+        <div class="success-icon">✓</div>
+        <h2>Recadastramento Concluído!</h2>
+        <p style="color:var(--muted);font-size:13px;margin-top:8px">Seus dados foram registrados com sucesso no sistema da Prefeitura de Paracambi.</p>
+        <div class="protocol-label">NÚMERO DE PROTOCOLO</div>
+        <div class="protocol-box" id="protocol-num">–</div>
+        <div id="summary-final"></div>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px">Guarde o número de protocolo para suas referências. Um comprovante será enviado ao seu e-mail.</p>
+        <button class="btn btn-ghost" onclick="reset()" style="margin-top:16px">↺ &nbsp;Novo Recadastramento</button>
+      </div>
+    </div>
+
+  </div><!-- /form-panel -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- THINKING OVERLAY -->
+<div class="thinking-overlay" id="thinking-overlay">
+  <div class="thinking-spinner">🤖</div>
+  <div class="thinking-text">IA processando...</div>
+  <div class="thinking-sub">Aguarde um momento</div>
+</div>
+
+<script>
+// ============================
+// CLOCK
+// ============================
+setInterval(()=>{
+  const n=new Date();
+  document.getElementById('clock-pill').textContent=
+    n.toLocaleTimeString('pt-BR');
+},1000);
+
+// ============================
+// STATE
+// ============================
+let currentStep = 0;
+let chatMode = 'guia';
+let conversationHistory = [];
+let depCount = 0;
+const docIds = []; // populated by buildDocLists
+
+// ============================
+// DOCUMENT LISTS
+// ============================
+const docsData = {
+  pessoais: [
+    {id:'doc-rg', name:'RG – Carteira de Identidade', desc:'Documento de identificação com foto'},
+    {id:'doc-cpf', name:'CPF – Cadastro de Pessoa Física', desc:'Cartão CPF ou documento com CPF'},
+    {id:'doc-sit-cpf', name:'Comprovante de Situação do CPF', desc:'Emitir em receita.economia.gov.br', link:'https://www.receita.fazenda.gov.br/'},
+    {id:'doc-res', name:'Comprovante de Residência', desc:'Conta de luz, água ou telefone (últimos 3 meses)'},
+    {id:'doc-irpf', name:'Declaração do IRPF (último exercício)', desc:'Última declaração entregue à Receita Federal'},
+    {id:'doc-militar', name:'Certificado de Reservista', desc:'Apenas para servidores do sexo masculino até 45 anos'},
+    {id:'doc-formacao', name:'Diploma / Certificado de Formação', desc:'Comprovante do maior grau de instrução'},
+    {id:'doc-classe', name:'Registro no Conselho de Classe (se houver)', desc:'CRM, COREN, CREA, OAB etc.'},
+  ],
+  certidoes: [
+    {id:'cert-tcerj', name:'Certidão TCE-RJ (Contas Julgadas Irregulares)', desc:'Tribunal de Contas do Estado do RJ · Validade: 30 dias', link:'https://www.tcerj.tc.br/portalnovo/pagina/emissao-de-certidao-da-lc-1432012'},
+    {id:'cert-tcerj2', name:'Certidão TCE-RJ (Inabilitados / Inidôneos)', desc:'Certidão de Inabilitados e Inidôneos · Validade: 30 dias', link:'https://www.tcerj.tc.br/portalnovo/pagina/emissao_de_certidao_negativa_de_inabilitados'},
+    {id:'cert-tse', name:'Certidão TSE – Quitação Eleitoral', desc:'Autoatendimento Eleitoral (TítuloNet) · Gratuita e imediata', link:'https://www.tse.jus.br/servicos-eleitorais/autoatendimento-eleitoral'},
+    {id:'cert-tjrj', name:'Certidão TJRJ – Cível e Criminal (1º Grau)', desc:'Portal Extrajudicial – Certidão Judicial Eletrônica · Gratuita · Prazo: até 8 dias úteis', link:'https://www4.tjrj.jus.br/portal-extrajudicial/certidao/judicial/solicitar'},
+    {id:'cert-trf', name:'Certidão TRF-2 – Justiça Federal (RJ/ES)', desc:'Certidão Unificada da Justiça Federal · Gratuita · Prazo: imediato ou até 5 dias', link:'https://certidoes.trf2.jus.br/certidoes/'},
+    {id:'cert-pf', name:'Certidão PF – Antecedentes Criminais (SINIC)', desc:'ePol SINIC Público · Polícia Federal · Gratuita · Validade: 90 dias', link:'https://servicos.pf.gov.br/epol-sinic-publico/'},
+    {id:'cert-tcu', name:'Certidão TCU – Contas Julgadas Irregulares', desc:'Portal TCU · Gratuita · Validade: 30 dias', link:'https://contas.tcu.gov.br/certidao/Web/Certidao/NadaConsta/home.faces'},
+    {id:'cert-tst', name:'Certidão TST – Débitos Trabalhistas (CNDT)', desc:'Certidão Negativa de Débitos Trabalhistas · Gratuita · Validade: 180 dias', link:'https://cndt-certidao.tst.jus.br/'},
+    {id:'cert-detran', name:'Certidão DETRAN-RJ – Infrações de Trânsito', desc:'Portal de Multas DETRAN-RJ · Certidão vinculada ao CPF', link:'https://www2.detran.rj.gov.br/portal/multas/certidaoEmitir'},
+    {id:'cert-inss', name:'Certidão INSS – Situação do CPF / Regularidade', desc:'Meu INSS · Gratuita · Acesso pelo Gov.br', link:'https://meu.inss.gov.br/'},
+  ],
+  dependentes: [
+    {id:'cert-nasc', name:'Certidão de Nascimento / Casamento', desc:'Dos filhos ou certidão de casamento/união estável'},
+    {id:'cert-dep-cpf', name:'CPF dos Dependentes', desc:'CPF de cada dependente cadastrado'},
+    {id:'cert-dep-rg', name:'RG dos Dependentes (se possuírem)', desc:'Documento de identidade dos dependentes'},
+    {id:'cert-dep-end', name:'Comprovante de Endereço dos Dependentes', desc:'Se o endereço for diferente do servidor'},
+  ]
+};
+
+// Build document lists
+function buildDocLists() {
+  ['pessoais','certidoes','dependentes'].forEach(cat => {
+    const container = document.getElementById('docs-'+cat);
+    docsData[cat].forEach(doc => {
+      docIds.push(doc.id);
+      const el = document.createElement('div');
+      el.className = 'doc-item';
+      el.id = doc.id;
+      el.onclick = () => toggleDoc(doc.id);
+      el.innerHTML = `
+        <div class="doc-check" id="chk-${doc.id}">✓</div>
+        <div class="doc-info">
+          <div class="doc-name">${doc.name}</div>
+          <div class="doc-desc">${doc.desc}</div>
+          ${doc.link ? `<a class="doc-link" href="${doc.link}" target="_blank" onclick="event.stopPropagation()">🔗 Emitir online</a>` : ''}
+        </div>
+        <div class="doc-status" id="st-${doc.id}">Pendente</div>
+      `;
+      container.appendChild(el);
+    });
+  });
+}
+buildDocLists();
+
+function toggleDoc(id) {
+  const el = document.getElementById(id);
+  const st = document.getElementById('st-'+id);
+  el.classList.toggle('checked');
+  st.textContent = el.classList.contains('checked') ? '✓ Nada Consta' : 'Pendente';
+  updateDocsProgress();
+}
+
+function updateDocsProgress() {
+  const done = docIds.filter(id => document.getElementById(id)?.classList.contains('checked')).length;
+  const total = docIds.length;
+  document.getElementById('docs-count').textContent = `${done} / ${total} confirmados`;
+  document.getElementById('docs-fill').style.width = (done/total*100)+'%';
+  if(done === total) addAI('🎉 Excelente! Todos os documentos confirmados. Pode avançar para a revisão!');
+}
+
+// ============================
+// NAVIGATION
+// ============================
+function goTo(step) {
+  document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`sec-${step}`).classList.add('active');
+  const track = document.getElementById('progress-track');
+  track.style.display = step >= 1 && step <= 5 ? 'flex' : 'none';
+  currentStep = step;
+  document.getElementById('step-pill').textContent = step >= 1 && step <= 5 ? `Etapa ${step} / 5` : '–';
+  // Update step nodes
+  for(let i=1;i<=5;i++) {
+    const node = document.getElementById('sn'+i);
+    const dot = document.getElementById('sd'+i);
+    node.className = 'step-node';
+    if(i < step) { node.classList.add('done'); dot.textContent = '✓'; }
+    else if(i === step) { node.classList.add('active'); dot.textContent = ['','👤','🏢','👨‍👩‍👧','📄','✅'][i]; }
+    else { dot.textContent = ['','👤','🏢','👨‍👩‍👧','📄','✅'][i]; }
+  }
+  document.getElementById('form-panel').scrollTo({top:0,behavior:'smooth'});
+  // AI context message
+  const msgs = {
+    1: 'Vamos começar com seus dados pessoais. Preencha com atenção — todos os dados devem conferir com seus documentos.',
+    2: 'Agora preencha seus dados funcionais. Confirme sua matrícula e secretaria de lotação.',
+    3: 'Cadastre seus dependentes. Lembre que filhos até 21 anos (ou 24 se universitários) podem ser incluídos.',
+    4: 'Esta etapa é o checklist de documentos. Marque cada item conforme você tiver em mãos. Certidões negativas devem ter menos de 30 dias.',
+    5: 'Revise todos os dados antes de enviar. Se precisar corrigir algo, use os botões Voltar.',
+  };
+  if(msgs[step]) addAI(msgs[step]);
+  if(step === 5) buildReview();
+}
+
+function next(step) {
+  // Basic validation
+  const required = {
+    1: [{id:'nome',label:'Nome Completo'},{id:'nascimento',err:'err-nasc',label:'Data de Nascimento'},{id:'cpf',label:'CPF'},{id:'rg',label:'RG'},{id:'pis',label:'PIS/PASEP'},{id:'endereco',err:'err-end',label:'Endereço'},{id:'telefone',err:'err-tel',label:'Telefone'}],
+    2: [{id:'matricula',err:'err-mat',label:'Matrícula'},{id:'admissao',err:'err-adm',label:'Data de Ingresso'},{id:'secretaria',err:'err-sec',label:'Secretaria'}],
+  };
+  const reqs = required[step];
+  let ok = true;
+  if(reqs) {
+    reqs.forEach(r => {
+      const el = document.getElementById(r.id);
+      const errEl = document.getElementById(r.err || 'err-'+r.id);
+      if(!el || !el.value.trim()) {
+        if(errEl) errEl.classList.add('show');
+        if(el) el.classList.add('err');
+        ok = false;
+      } else {
+        if(errEl) errEl.classList.remove('show');
+        if(el) el.classList.remove('err');
+      }
+    });
+  }
+  if(!ok) {
+    addAI('⚠️ Há campos obrigatórios não preenchidos. Por favor revise os campos destacados em vermelho antes de continuar.');
+    return;
+  }
+  // Validação específica cargo/comissão
+  if(step === 2) {
+    const regime = document.getElementById('regime')?.value;
+    const cargo = document.getElementById('cargo')?.value?.trim();
+    const cargoComissao = document.getElementById('cargo-comissao')?.value?.trim();
+    const errCargo = document.getElementById('err-cargo');
+    const errComissao = document.getElementById('err-cargo-comissao');
+    if(regime === 'Comissionado') {
+      if(!cargoComissao) {
+        errComissao.classList.add('show');
+        document.getElementById('cargo-comissao').classList.add('err');
+        addAI('⚠️ Para regime exclusivamente comissionado, o Cargo em Comissão é obrigatório.');
+        return;
+      }
+      errComissao.classList.remove('show');
+    } else {
+      if(!cargo) {
+        errCargo.classList.add('show');
+        document.getElementById('cargo').classList.add('err');
+        addAI('⚠️ O Cargo Efetivo é obrigatório para o regime selecionado.');
+        return;
+      }
+      errCargo.classList.remove('show');
+    }
+  }
+  goTo(step+1);
+}
+
+// ============================
+// DEPENDENTES
+// ============================
+function addDep() {
+  depCount++;
+  const id = depCount;
+  const div = document.createElement('div');
+  div.className = 'dep-card';
+  div.id = `dep-card-${id}`;
+  div.innerHTML = `
+    <div class="dep-card-header">
+      <div class="dep-label">Dependente ${id}</div>
+      <button class="btn-rem" onclick="removeDep(${id})">✕ Remover</button>
+    </div>
+    <div class="fgrid g3">
+      <div class="f"><label class="flabel">Grau de Parentesco <span class="req">*</span></label>
+        <select id="dep-tipo-${id}">
+          <option value="">Selecione...</option>
+          <option>Cônjuge/Companheiro(a)</option><option>Filho(a)</option><option>Enteado(a)</option>
+          <option>Pai</option><option>Mãe</option><option>Irmão/Irmã (inválido)</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="f s2"><label class="flabel">Nome Completo <span class="req">*</span></label><input type="text" id="dep-nome-${id}" placeholder="Nome completo do dependente"/></div>
+      <div class="f"><label class="flabel">CPF <span class="req">*</span></label><input type="text" id="dep-cpf-${id}" placeholder="000.000.000-00" oninput="mCPF(this)" maxlength="14"/></div>
+      <div class="f"><label class="flabel">RG (se possuir)</label><input type="text" id="dep-rg-${id}" placeholder="Número do RG"/></div>
+      <div class="f"><label class="flabel">Data de Nascimento <span class="req">*</span></label><input type="date" id="dep-nasc-${id}"/></div>
+      <div class="f s3"><label class="flabel">Endereço (se diferente do servidor)</label><input type="text" id="dep-end-${id}" placeholder="Rua, nº, bairro, cidade, CEP – preencher se diferente"/></div>
+      <div class="f"><label class="flabel">Menor de 14 anos / PcD?</label>
+        <select id="dep-menor-${id}"><option value="">Selecione...</option><option>Não</option><option>Sim – menor de 14 anos</option><option>Sim – Portador de Deficiência</option><option>Sim – ambos</option></select>
+      </div>
+      <div class="f"><label class="flabel">Incluso no Plano de Saúde?</label>
+        <select id="dep-plano-${id}"><option value="">Selecione...</option><option>Sim</option><option>Não</option></select>
+      </div>
+      <div class="f"><label class="flabel">Estuda atualmente?</label>
+        <select id="dep-estuda-${id}"><option value="">Selecione...</option><option>Não</option><option>Sim – Ed. Básica</option><option>Sim – Ensino Superior</option></select>
+      </div>
+    </div>`;
+  document.getElementById('dep-list').appendChild(div);
+  addAI(`✅ Dependente ${id} adicionado! Preencha os dados com atenção.`);
+}
+
+function removeDep(id) {
+  document.getElementById(`dep-card-${id}`)?.remove();
+  addAI('🗑️ Dependente removido.');
+}
+
+// ============================
+// REVIEW
+// ============================
+function buildReview() {
+  const g = id => { const e = document.getElementById(id); return e ? (e.value || '–') : '–'; };
+  const r = name => { const c = document.querySelector(`input[name="${name}"]:checked`); return c ? c.value : '–'; };
+  const deps = document.querySelectorAll('.dep-card');
+  let depsHTML = '';
+  if(deps.length === 0) {
+    depsHTML = '<div class="review-item full"><label>DEPENDENTES</label><p>Nenhum dependente cadastrado</p></div>';
+  } else {
+    deps.forEach((d,i) => {
+      const idx = d.id.split('-')[2];
+      depsHTML += `
+        <div class="review-item"><label>DEP. ${i+1} – ${document.getElementById('dep-tipo-'+idx)?.value||'–'}</label><p>${document.getElementById('dep-nome-'+idx)?.value||'–'}</p></div>
+        <div class="review-item"><label>CPF / NASC.</label><p>${document.getElementById('dep-cpf-'+idx)?.value||'–'} · ${document.getElementById('dep-nasc-'+idx)?.value||'–'}</p></div>`;
+    });
+  }
+  const docsOk = docIds.filter(id => document.getElementById(id)?.classList.contains('checked')).length;
+  document.getElementById('review-content').innerHTML = `
+    <div class="section-tag">👤 Identificação</div>
+    <div class="review-grid">
+      <div class="review-item full"><label>NOME COMPLETO</label><p>${g('nome')}</p></div>
+      <div class="review-item"><label>CPF</label><p>${g('cpf')}</p></div>
+      <div class="review-item"><label>RG</label><p>${g('rg')}</p></div>
+      <div class="review-item"><label>NASC. / IDADE</label><p>${g('nascimento')} · ${g('idade')} anos</p></div>
+      <div class="review-item"><label>ESTADO CIVIL</label><p>${g('estado-civil')}</p></div>
+      <div class="review-item"><label>SEXO</label><p>${r('sexo')}</p></div>
+      <div class="review-item"><label>RAÇA</label><p>${r('raca')}</p></div>
+      <div class="review-item"><label>TELEFONE</label><p>${g('telefone')}</p></div>
+      <div class="review-item full"><label>E-MAIL</label><p>${g('email')}</p></div>
+      <div class="review-item full"><label>ENDEREÇO</label><p>${g('endereco')}, ${g('numero')} – ${g('bairro')} – ${g('cidade')} – CEP ${g('cep')}</p></div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0"/>
+    <div class="section-tag">🏢 Dados Funcionais</div>
+    <div class="review-grid">
+      <div class="review-item"><label>MATRÍCULA</label><p>${g('matricula')}</p></div>
+      <div class="review-item"><label>REGIME</label><p>${g('regime')}</p></div>
+      <div class="review-item full"><label>CARGO EFETIVO</label><p>${g('cargo') !== '–' ? g('cargo') : 'Não se aplica'}</p></div>
+      <div class="review-item full"><label>CARGO EM COMISSÃO</label><p>${g('cargo-comissao')}</p></div>
+      <div class="review-item full"><label>SECRETARIA / ÓRGÃO</label><p>${g('secretaria')}</p></div>
+      <div class="review-item"><label>ADMISSÃO</label><p>${g('admissao')}</p></div>
+      <div class="review-item"><label>SITUAÇÃO</label><p>${g('situacao')||'–'}</p></div>
+      <div class="review-item"><label>FORMAÇÃO</label><p>${r('instrucao')}</p></div>
+      <div class="review-item"><label>MORADIA</label><p>${r('moradia')}</p></div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0"/>
+    <div class="section-tag">👨‍👩‍👧 Dependentes (${deps.length})</div>
+    <div class="review-grid">${depsHTML}</div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:14px 0"/>
+    <div class="section-tag">📄 Documentos (${docsOk}/${docIds.length} confirmados)</div>
+    <div class="review-grid">
+      <div class="review-item full"><label>STATUS</label><p>${docsOk === docIds.length ? '✅ Todos os documentos confirmados' : '⚠️ '+docsOk+' de '+docIds.length+' itens confirmados'}</p></div>
+    </div>`;
+}
+
+// ============================
+// SUBMIT + GOOGLE SHEETS
+// ============================
+
+// ⚙️ COLE AQUI A URL DO SEU APPS SCRIPT APÓS IMPLANTAR
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycby97KIMajJy-4iEn72dOxSrWug27l_GV2A-oOZyeAVshbtFKygR2njz-71ODYrhg6ueVw/exec';
+
+async function submit() {
+  const sendBtn = document.querySelector('#sec-5 .btn-success');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '⏳ Enviando...';
+
+  const g = id => { const e = document.getElementById(id); return e ? (e.value || '') : ''; };
+  const r = name => { const c = document.querySelector(`input[name="${name}"]:checked`); return c ? c.value : ''; };
+  const deps = document.querySelectorAll('.dep-card');
+  const docsOk = docIds.filter(id => document.getElementById(id)?.classList.contains('checked')).length;
+  const prot = 'PRC-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900000)+100000);
+
+  // Monta lista de dependentes como texto
+  const depsList = [];
+  deps.forEach((d, i) => {
+    const idx = d.id.split('-')[2];
+    depsList.push(
+      `DEP.${i+1}: ${document.getElementById('dep-tipo-'+idx)?.value||''} – ` +
+      `${document.getElementById('dep-nome-'+idx)?.value||''} – ` +
+      `CPF: ${document.getElementById('dep-cpf-'+idx)?.value||''} – ` +
+      `Nasc: ${document.getElementById('dep-nasc-'+idx)?.value||''}`
+    );
+  });
+
+  const payload = {
+    protocolo:      prot,
+    dataHora:       new Date().toLocaleString('pt-BR'),
+    // Pessoais
+    nome:           g('nome'),
+    nomeSocial:     g('nome-social'),
+    cpf:            g('cpf'),
+    rg:             g('rg'),
+    rgOrgao:        g('rg-orgao'),
+    nascimento:     g('nascimento'),
+    idade:          g('idade'),
+    nacionalidade:  g('nacionalidade'),
+    naturalidade:   g('naturalidade'),
+    mae:            g('mae'),
+    pai:            g('pai'),
+    sexo:           r('sexo'),
+    genero:         r('genero'),
+    estadoCivil:    g('estado-civil'),
+    raca:           r('raca'),
+    pcd:            r('pcd'),
+    titulo:         g('titulo'),
+    zona:           g('zona'),
+    secao:          g('secao'),
+    pis:            g('pis'),
+    cnh:            g('cnh'),
+    cnhCat:         g('cnh-cat'),
+    reservista:     g('reservista'),
+    // Endereço
+    endereco:       g('endereco'),
+    numero:         g('numero'),
+    complemento:    g('complemento'),
+    bairro:         g('bairro'),
+    cidade:         g('cidade'),
+    cep:            g('cep'),
+    telefone:       g('telefone'),
+    tel2:           g('tel2'),
+    email:          g('email'),
+    whatsapp:       g('whatsapp'),
+    // Funcionais
+    matricula:      g('matricula'),
+    regime:         g('regime'),
+    cargo:          g('cargo'),
+    cargoComissao:  g('cargo-comissao'),
+    concurso:       r('concurso'),
+    admissao:       g('admissao'),
+    secretaria:     g('secretaria'),
+    localTrabalho:  g('local-trabalho'),
+    jornada:        g('jornada'),
+    situacao:       g('situacao'),
+    // Formação
+    instrucao:      r('instrucao'),
+    cursoTecnico:   g('curso-tecnico'),
+    anoTecnico:     g('ano-tecnico'),
+    cursoSuperior:  g('curso-superior'),
+    anoSuperior:    g('ano-superior'),
+    posGrad1:       g('pos-grad'),
+    anoPosGrad1:    g('ano-pos'),
+    posGrad2:       g('pos-grad2'),
+    anoPosGrad2:    g('ano-pos2'),
+    posGrad3:       g('pos-grad3'),
+    anoPosGrad3:    g('ano-pos3'),
+    mestrado:       g('mestrado'),
+    anoMestrado:    g('ano-mestrado'),
+    capacitacoes:   g('capacitacoes'),
+    // Socioassistencial
+    moradia:        r('moradia'),
+    moradores:      g('moradores'),
+    depDef:         g('dep-def'),
+    depDefQual:     g('dep-def-qual'),
+    progSocial:     g('prog-social'),
+    progSocialQual: g('prog-social-qual'),
+    filhosEscola:   g('filhos-escola'),
+    filhosEscolaQt: g('filhos-escola-qt'),
+    atividadeCom:   g('ativ-com'),
+    atividadeComQual:g('ativ-com-qual'),
+    // Bancários
+    banco:          g('banco'),
+    agencia:        g('agencia'),
+    conta:          g('conta'),
+    // Dependentes
+    dependentesQtd: deps.length,
+    dependentesDetalhe: depsList.join(' | '),
+    // Documentos
+    docsConfirmados: `${docsOk}/${docIds.length}`,
+    status:         'RECADASTRADO',
+  };
+
+  // Mostra overlay de envio
+  document.getElementById('thinking-overlay').classList.add('show');
+  document.querySelector('.thinking-text').textContent = 'Enviando para o servidor...';
+  document.querySelector('.thinking-sub').textContent = 'Aguarde, seus dados estão sendo salvos';
+
+  let sucesso = false;
+  let erroMsg = '';
+
+  try {
+    if (!SHEETS_URL || SHEETS_URL === 'COLE_AQUI_A_URL_DO_APPS_SCRIPT') {
+      // Modo demonstração – simula envio bem-sucedido
+      await new Promise(r => setTimeout(r, 1500));
+      sucesso = true;
+      console.warn('⚠️ URL do Google Sheets não configurada. Configure SHEETS_URL no código.');
+    } else {
+      const resp = await fetch(SHEETS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // Apps Script exige text/plain em fetch cross-origin
+        body: JSON.stringify(payload),
+      });
+      const result = await resp.json();
+      sucesso = result.ok === true;
+      if (!sucesso) erroMsg = result.erro || 'Erro desconhecido do servidor';
+    }
+  } catch(err) {
+    sucesso = false;
+    erroMsg = err.message;
+  }
+
+  document.getElementById('thinking-overlay').classList.remove('show');
+  sendBtn.disabled = false;
+  sendBtn.textContent = '✓ Confirmar e Enviar';
+
+  if (sucesso) {
+    document.getElementById('protocol-num').textContent = prot;
+    document.getElementById('summary-final').innerHTML = `
+      <div class="review-grid" style="margin-top:16px">
+        <div class="review-item"><label>SERVIDOR</label><p>${payload.nome}</p></div>
+        <div class="review-item"><label>MATRÍCULA</label><p>${payload.matricula}</p></div>
+        <div class="review-item"><label>SECRETARIA</label><p>${payload.secretaria}</p></div>
+        <div class="review-item"><label>DATA / HORA</label><p>${payload.dataHora}</p></div>
+        <div class="review-item full" style="background:#d8f3dc;border-color:#74c69d">
+          <label style="color:#2d6a4f">DADOS SALVOS EM</label>
+          <p style="color:#2d6a4f">✅ Google Sheets · Planilha Recadastramentos</p>
+        </div>
+      </div>`;
+    goTo(6);
+    addAI(`🎉 Recadastramento concluído e salvo! Protocolo: **${prot}**. Os dados foram registrados na planilha da Prefeitura. Guarde este número para suas referências.`);
+  } else {
+    // Falha no envio — oferece fallback CSV
+    addAI(`⚠️ Houve um problema ao salvar os dados no servidor. Não se preocupe — seus dados estão sendo baixados em CSV como backup. Erro: ${erroMsg}`);
+    downloadCSV(payload, prot);
+    // Ainda conclui localmente
+    document.getElementById('protocol-num').textContent = prot;
+    document.getElementById('summary-final').innerHTML = `
+      <div class="review-grid" style="margin-top:16px">
+        <div class="review-item"><label>SERVIDOR</label><p>${payload.nome}</p></div>
+        <div class="review-item"><label>MATRÍCULA</label><p>${payload.matricula}</p></div>
+        <div class="review-item full" style="background:#fff8e7;border-color:#f5c842">
+          <label style="color:#8a6a00">ATENÇÃO</label>
+          <p style="color:#8a6a00">⚠️ Envio ao servidor falhou. Protocolo gerado localmente. Entregue o CSV à SEADM.</p>
+        </div>
+      </div>`;
+    goTo(6);
+  }
+}
+
+// Fallback: download CSV em caso de falha de rede
+function downloadCSV(payload, prot) {
+  const headers = Object.keys(payload);
+  const values = Object.values(payload).map(v => `"${String(v).replace(/"/g,'""')}"`);
+  const csv = '\uFEFF' + headers.join(';') + '\n' + values.join(';');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `recadastramento_${prot}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================
+// RESET
+// ============================
+function reset() {
+  document.querySelectorAll('input,select,textarea').forEach(el => {
+    if(el.type !== 'radio' && el.type !== 'checkbox') { el.value = ''; el.classList.remove('ok','err'); }
+    else el.checked = false;
+  });
+  document.getElementById('dep-list').innerHTML = '';
+  docIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) { el.classList.remove('checked'); const st = document.getElementById('st-'+id); if(st) st.textContent = 'Pendente'; }
+  });
+  depCount = 0;
+  conversationHistory = [];
+  document.getElementById('messages').innerHTML = '';
+  updateDocsProgress();
+  goTo(0);
+  initChat();
+}
+
+// ============================
+// CARGO EFETIVO / COMISSIONADO LOGIC
+// ============================
+function toggleCargoEfetivo(regime) {
+  const blocoEfetivo = document.getElementById('bloco-cargo-efetivo');
+  const blocoComissao = document.getElementById('bloco-cargo-comissao');
+  const reqComissao = document.getElementById('req-comissao');
+  const notaComissao = document.getElementById('nota-comissao');
+  const cargoInput = document.getElementById('cargo');
+  const cargoComissaoInput = document.getElementById('cargo-comissao');
+
+  if (regime === 'Comissionado') {
+    // Exclusivamente comissionado: cargo efetivo não se aplica, comissão obrigatória
+    blocoEfetivo.style.opacity = '0.4';
+    blocoEfetivo.style.pointerEvents = 'none';
+    cargoInput.value = '';
+    cargoInput.placeholder = 'Não se aplica – regime exclusivamente comissionado';
+    reqComissao.innerHTML = '<span class="req">*</span>';
+    notaComissao.style.display = 'block';
+    blocoComissao.style.gridColumn = 'span 2';
+  } else {
+    // Estatutário, CLT, Temporário: cargo efetivo obrigatório, comissão opcional
+    blocoEfetivo.style.opacity = '1';
+    blocoEfetivo.style.pointerEvents = 'auto';
+    cargoInput.placeholder = 'Ex: Professor, Agente Administrativo...';
+    reqComissao.innerHTML = '<span style="font-size:10px;color:var(--muted);font-weight:400">(se houver)</span>';
+    notaComissao.style.display = 'none';
+    blocoComissao.style.gridColumn = '';
+  }
+}
+
+// ============================
+// MASKS
+// ============================
+function mCPF(el) {
+  let v = el.value.replace(/\D/g,'');
+  v = v.replace(/(\d{3})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d)/,'$1.$2');
+  v = v.replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  el.value = v;
+}
+function mCEP(el) {
+  let v = el.value.replace(/\D/g,'');
+  v = v.replace(/(\d{5})(\d)/,'$1-$2');
+  el.value = v;
+}
+function mPhone(el) {
+  let v = el.value.replace(/\D/g,'');
+  v = v.replace(/^(\d{2})(\d)/,'($1) $2');
+  v = v.replace(/(\d{5})(\d{1,4})$/,'$1-$2');
+  el.value = v;
+}
+function calcIdade() {
+  const nasc = document.getElementById('nascimento').value;
+  if(!nasc) return;
+  const hoje = new Date();
+  const dn = new Date(nasc);
+  let age = hoje.getFullYear() - dn.getFullYear();
+  const m = hoje.getMonth() - dn.getMonth();
+  if(m < 0 || (m === 0 && hoje.getDate() < dn.getDate())) age--;
+  document.getElementById('idade').value = age;
+}
+
+// ============================
+// CHAT MODES & QUICK ACTIONS
+// ============================
+const quickByMode = {
+  guia: ['O que é o recadastramento?', 'Quais campos são obrigatórios?', 'Prazo e penalidade', 'Como adicionar dependentes?'],
+  duvida: ['Posso preencher em partes?', 'E se meu CPF estiver irregular?', 'Servidor cedido deve fazer?', 'Como funciona o nome social?'],
+  doc: ['Quais certidões preciso?', 'Onde emitir a certidão TJRJ?', 'Certidão tem validade?', 'Preciso de apostila?'],
+};
+
+function setMode(mode) {
+  chatMode = mode;
+  ['guia','duvida','doc'].forEach(m => {
+    document.getElementById('tab-'+m).classList.toggle('active', m===mode);
+  });
+  updateQuickActions();
+  const modeMsg = {
+    guia: 'Modo Guia ativado. Vou te orientar em cada etapa do preenchimento!',
+    duvida: 'Modo Dúvidas ativado. Pode perguntar qualquer coisa sobre o processo de recadastramento.',
+    doc: 'Modo Documentos ativado. Pergunte sobre qualquer certidão ou documento necessário.',
+  };
+  addAI(modeMsg[mode]);
+}
+
+function updateQuickActions() {
+  const qa = document.getElementById('quick-actions');
+  qa.innerHTML = '';
+  quickByMode[chatMode].forEach(q => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-btn';
+    btn.textContent = q;
+    btn.onclick = () => { document.getElementById('user-input').value = q; sendMessage(); };
+    qa.appendChild(btn);
+  });
+}
+
+// ============================
+// AI CHAT (Claude API)
+// ============================
+const SYSTEM_PROMPT = `Você é o Assistente de Recadastramento da Prefeitura Municipal de Paracambi, RJ. Você é especialista no Decreto nº 6.010/2025 e na Resolução SEADM que regulamentam o Recadastramento Anual de Servidores Municipais 2026.
+
+CONTEXTO DO FORMULÁRIO:
+O recadastramento tem 5 etapas:
+1. DADOS PESSOAIS: Nome, nascimento, sexo, gênero, raça, PCD, CPF, RG, PIS/PASEP, título eleitoral, CNH, reservista, endereço, telefone, email, WhatsApp.
+2. DADOS FUNCIONAIS: Matrícula, regime jurídico, cargo efetivo, cargo em comissão, concurso de ingresso, data de admissão, secretaria/órgão, local de trabalho, jornada semanal, situação atual, formação acadêmica (grau de instrução, cursos técnicos/superiores/pós-graduação, capacitações), questionário socioassistencial (moradia, moradores, dependente com deficiência, programa social, filhos em escola, atividades comunitárias) e dados bancários.
+3. DEPENDENTES: Cônjuge, filhos até 21 anos (ou 24 se universitários), pais, irmãos inválidos. Dados: grau de parentesco, nome, CPF, RG, nascimento, endereço, PcD/menor, plano de saúde, situação escolar.
+4. DOCUMENTOS: Pessoais (RG, CPF, sit. CPF, comprovante residência, IRPF, reservista, diploma, conselho de classe), Certidões (TCE-RJ, TSE, TJRJ, TRF-2, PF, TCU, TST, DETRAN, INSS) e Dependentes (certidão nascimento/casamento, CPF, RG, comprovante endereço).
+5. REVISÃO E ENVIO.
+
+REGRAS IMPORTANTES:
+- Recadastramento é obrigatório para TODOS os servidores ativos
+- Deve ser feito no mês de aniversário do servidor
+- Servidores que não cumprirem terão remuneração SUSPENSA (art. 7º, Decreto 6.010/2025)
+- Certidões devem ter menos de 30 dias de emissão
+- Servidores cedidos também devem se recadastrar
+- Nome social é opcional e facultativo
+- PIS/PASEP: trabalhadores do setor público usam PASEP
+
+SEU COMPORTAMENTO:
+- Responda SEMPRE em português brasileiro
+- Seja objetivo, claro e amigável
+- Use emojis com moderação para tornar a conversa mais humanizada
+- Respostas curtas (3-6 linhas no máximo) a menos que a pergunta exija detalhe
+- Se o servidor parecer confuso, simplifique e oriente passo a passo
+- Não invente informações que não estejam no decreto`;
+
+async function callClaude(userMsg) {
+  conversationHistory.push({ role: 'user', content: userMsg });
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: conversationHistory,
+      })
+    });
+    const data = await resp.json();
+    const text = data.content?.map(c => c.text || '').join('') || 'Desculpe, não consegui processar sua pergunta.';
+    conversationHistory.push({ role: 'assistant', content: text });
+    return text;
+  } catch(e) {
+    return 'Desculpe, houve um erro de conexão. Por favor tente novamente em instantes.';
+  }
+}
+
+function addAI(text, delay=0) {
+  setTimeout(() => {
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = `
+      <div class="msg-avatar">🤖</div>
+      <div class="msg-bubble">${text}</div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, delay);
+}
+
+function addUser(text) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `
+    <div class="msg-avatar">👤</div>
+    <div class="msg-bubble">${text}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'typing-msg';
+  div.innerHTML = `
+    <div class="msg-avatar">🤖</div>
+    <div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  document.getElementById('typing-msg')?.remove();
+}
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const btn = document.getElementById('send-btn');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+  addUser(text);
+  btn.disabled = true;
+  addTyping();
+  const response = await callClaude(text);
+  removeTyping();
+  addAI(response);
+  btn.disabled = false;
+}
+
+function handleKey(e) {
+  if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ============================
+// INIT
+// ============================
+function initChat() {
+  addAI('👋 Olá! Sou o Assistente de Recadastramento da Prefeitura de Paracambi.', 0);
+  addAI('Vou te guiar em todas as etapas do processo. O preenchimento leva aproximadamente 10 minutos.', 600);
+  addAI('Você pode me perguntar qualquer dúvida sobre campos, documentos ou regras do Decreto nº 6.010/2025. Quando estiver pronto, clique em <strong>Iniciar Recadastramento</strong>! 🏛️', 1200);
+  updateQuickActions();
+}
+
+initChat();
+</script>
+</body>
+</html>
